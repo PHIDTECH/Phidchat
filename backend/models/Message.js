@@ -1,0 +1,75 @@
+const mongoose = require('mongoose');
+
+const messageSchema = new mongoose.Schema({
+  conversation: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Conversation',
+    required: true
+  },
+  sender: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  content: {
+    text: String,
+    image: {
+      url: String,
+      publicId: String
+    },
+    video: {
+      url: String,
+      publicId: String
+    },
+    audio: {
+      url: String,
+      publicId: String
+    }
+  },
+  messageType: {
+    type: String,
+    enum: ['text', 'image', 'video', 'audio', 'file'],
+    default: 'text'
+  },
+  readBy: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    readAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  deliveredTo: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    deliveredAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  replyTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Message'
+  },
+  isEdited: {
+    type: Boolean,
+    default: false
+  },
+  editedAt: Date,
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+  deletedAt: Date
+}, {
+  timestamps: true
+});
+
+messageSchema.index({ conversation: 1, createdAt: -1 });
+messageSchema.index({ sender: 1 });
+
+module.exports = mongoose.model('Message', messageSchema);
