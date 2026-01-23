@@ -20,7 +20,7 @@ export default function Login() {
     try {
       const response = await authApi.login(email, password)
       setAuth(response.user, response.token)
-      navigate('/')
+      navigate('/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.message || 'Hitilafu imetokea. Jaribu tena.')
     }

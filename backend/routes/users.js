@@ -100,7 +100,29 @@ router.get('/:id/following', async (req, res) => {
   }
 });
 
-// Search users
+// Get all users or search
+router.get('/search', async (req, res) => {
+  try {
+    const { q, limit = 20 } = req.query;
+
+    let query = {};
+    if (q) {
+      query.name = { $regex: q, $options: 'i' };
+    }
+
+    const users = await User.find(query)
+      .select('name email profilePicture verified isCreator isOnline')
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error('Search Users Error:', error);
+    res.status(500).json({ success: false, message: 'Hitilafu imetokea' });
+  }
+});
+
+// Search users (alternative endpoint)
 router.get('/search/query', async (req, res) => {
   try {
     const { q, limit = 10 } = req.query;

@@ -9,7 +9,9 @@ import {
   HomeIcon,
   FilmIcon,
   ShoppingBagIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  Bars3Icon,
+  XMarkIcon
 } from '@heroicons/react/24/outline'
 import { HeartIcon, ChatBubbleOvalLeftIcon, ShareIcon } from '@heroicons/react/24/solid'
 import axios from 'axios'
@@ -47,6 +49,15 @@ export default function Dashboard() {
   const [posts, setPosts] = useState<Post[]>([])
   const [postText, setPostText] = useState('')
   const [loading, setLoading] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
+
+  useEffect(() => {
+    console.log('Dashboard - Current User:', user)
+    console.log('Dashboard - User ID:', user?._id)
+    console.log('Dashboard - User ID type:', typeof user?._id)
+  }, [user])
 
   useEffect(() => {
     fetchUsers()
@@ -74,19 +85,44 @@ export default function Dashboard() {
     }
   }
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    setSelectedFiles(files)
+    
+    const urls = files.map(file => URL.createObjectURL(file))
+    setPreviewUrls(urls)
+  }
+
+  const removeFile = (index: number) => {
+    const newFiles = selectedFiles.filter((_, i) => i !== index)
+    const newUrls = previewUrls.filter((_, i) => i !== index)
+    setSelectedFiles(newFiles)
+    setPreviewUrls(newUrls)
+  }
+
   const createPost = async () => {
-    if (!postText.trim()) return
+    if (!postText.trim() && selectedFiles.length === 0) return
     
     setLoading(true)
     try {
       const token = localStorage.getItem('token')
-      await axios.post('/api/posts', {
-        content: { text: postText },
-        visibility: 'public'
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
+      const formData = new FormData()
+      formData.append('text', postText)
+      formData.append('visibility', 'public')
+      
+      selectedFiles.forEach((file) => {
+        formData.append('media', file)
+      })
+
+      await axios.post('/api/posts', formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
       })
       setPostText('')
+      setSelectedFiles([])
+      setPreviewUrls([])
       fetchPosts()
     } catch (error) {
       console.error('Error creating post:', error)
@@ -116,6 +152,16 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+              >
+                {sidebarOpen ? (
+                  <XMarkIcon className="w-6 h-6 text-gray-600" />
+                ) : (
+                  <Bars3Icon className="w-6 h-6 text-gray-600" />
+                )}
+              </button>
               <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">P</span>
               </div>
@@ -144,33 +190,58 @@ export default function Dashboard() {
       </header>
 
       <div className="pt-14 flex">
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div
+            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Left Sidebar */}
-        <aside className="hidden lg:block w-64 fixed left-0 h-screen bg-white border-r border-gray-200 overflow-y-auto">
+        <aside className={`${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0 fixed lg:static w-64 h-screen bg-white border-r border-gray-200 overflow-y-auto transition-transform duration-300 ease-in-out z-50 lg:z-auto`}>
           <div className="p-4 space-y-2">
-            <Link to="/" className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100">
+            <Link to="/" onClick={() => setSidebarOpen(false)} className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100">
               <HomeIcon className="w-6 h-6 text-blue-500" />
               <span className="font-medium">Home</span>
             </Link>
-            <Link to="/friends" className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100">
+            <Link to="/friends" onClick={() => setSidebarOpen(false)} className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100">
               <UserGroupIcon className="w-6 h-6 text-blue-500" />
               <span className="font-medium">Friends</span>
             </Link>
-            <Link to="/messages" className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100">
+            <Link to="/messages" onClick={() => setSidebarOpen(false)} className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100">
               <ChatBubbleLeftIcon className="w-6 h-6 text-blue-500" />
               <span className="font-medium">Messages</span>
             </Link>
-            <Link to="/content" className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100">
+            <Link to="/content" onClick={() => setSidebarOpen(false)} className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100">
               <FilmIcon className="w-6 h-6 text-blue-500" />
               <span className="font-medium">PNTV</span>
             </Link>
-            <Link to="/wallet" className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100">
+            <Link to="/wallet" onClick={() => setSidebarOpen(false)} className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100">
               <ShoppingBagIcon className="w-6 h-6 text-blue-500" />
               <span className="font-medium">Wallet</span>
             </Link>
-            <Link to="/settings" className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100">
+            <Link to="/settings" onClick={() => setSidebarOpen(false)} className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-100">
               <Cog6ToothIcon className="w-6 h-6 text-blue-500" />
               <span className="font-medium">Settings</span>
             </Link>
+            <button
+              onClick={() => {
+                const { logout } = useAuthStore.getState()
+                logout()
+                localStorage.clear()
+                sessionStorage.clear()
+                window.location.href = '/login'
+              }}
+              className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 w-full text-left"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span className="font-medium">Logout</span>
+            </button>
           </div>
 
           <div className="border-t border-gray-200 mt-4 pt-4 px-4">
@@ -221,10 +292,47 @@ export default function Dashboard() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   rows={3}
                 />
-                <div className="mt-3 flex justify-end">
+                
+                {/* Image/Video Previews */}
+                {previewUrls.length > 0 && (
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    {previewUrls.map((url, index) => (
+                      <div key={index} className="relative">
+                        {selectedFiles[index].type.startsWith('video/') ? (
+                          <video src={url} className="w-full h-32 object-cover rounded-lg" controls />
+                        ) : (
+                          <img src={url} alt="Preview" className="w-full h-32 object-cover rounded-lg" />
+                        )}
+                        <button
+                          onClick={() => removeFile(index)}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <label className="cursor-pointer flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-sm font-medium">Photo/Video</span>
+                      <input
+                        type="file"
+                        accept="image/*,video/*"
+                        multiple
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
                   <button
                     onClick={createPost}
-                    disabled={loading || !postText.trim()}
+                    disabled={loading || (!postText.trim() && selectedFiles.length === 0)}
                     className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? 'Posting...' : 'Post'}

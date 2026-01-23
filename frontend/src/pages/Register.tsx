@@ -40,7 +40,7 @@ export default function Register() {
         password: formData.password
       })
       setAuth(response.user, response.token)
-      navigate('/')
+      navigate('/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.message || 'Hitilafu imetokea. Jaribu tena.')
     }
