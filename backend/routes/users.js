@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const { auth, optionalAuth } = require('../middleware/auth');
 
@@ -7,6 +8,11 @@ const router = express.Router();
 // Get user by ID
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, message: 'ID ya mtumiaji si sahihi' });
+    }
+
     const user = await User.findById(req.params.id)
       .select('-password')
       .populate('followers', 'name profilePicture')

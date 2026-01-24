@@ -6,6 +6,17 @@ export interface User {
   profilePicture?: string;
   coverPhoto?: string;
   bio?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  education?: string;
+  location?: {
+    country?: string;
+    region?: string;
+    district?: string;
+    city?: string;
+    street?: string;
+  };
+  website?: string;
   verified: boolean;
   verifiedAt?: string;
   wallet: {

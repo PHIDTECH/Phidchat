@@ -35,6 +35,10 @@ Thumbs.db
 # Testing
 coverage/
 
+# Uploads
+uploads/
+backend/uploads/
+
 # Misc
 *.pem
 .vercel

@@ -48,14 +48,18 @@ const userSchema = new mongoose.Schema({
     maxlength: 500
   },
   location: {
+    country: String,
+    region: String,
+    district: String,
     city: String,
-    country: String
+    street: String
   },
   website: String,
   dateOfBirth: Date,
+  education: String,
   gender: {
     type: String,
-    enum: ['male', 'female', 'other', 'prefer_not_to_say'],
+    enum: ['male', 'female', 'other', 'prefer_not_to_say', ''],
     default: ''
   },
   

@@ -226,10 +226,10 @@ export default function Profile() {
                 )}
               </div>
               {isOwnProfile && (
-                <button className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                <Link to="/edit-profile" className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
                   <PencilIcon className="w-4 h-4" />
                   <span>Edit Profile</span>
-                </button>
+                </Link>
               )}
             </div>
             {user.bio && (

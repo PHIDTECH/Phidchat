@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
+const upload = require('../config/multer');
 
 const router = express.Router();
 
@@ -162,18 +163,47 @@ router.get('/me', auth, async (req, res) => {
 // Update profile
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { name, bio, phone } = req.body;
+    const { 
+      name, 
+      bio, 
+      phone, 
+      gender, 
+      dateOfBirth, 
+      education,
+      country,
+      region,
+      district,
+      city,
+      street,
+      website 
+    } = req.body;
     
     const updateData = {};
     if (name) updateData.name = name;
     if (bio !== undefined) updateData.bio = bio;
     if (phone) updateData.phone = phone;
+    if (gender !== undefined) updateData.gender = gender;
+    if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
+    if (education !== undefined) updateData.education = education;
+    if (website !== undefined) updateData.website = website;
+    
+    // Handle location as nested object
+    const location = {};
+    if (country !== undefined) location.country = country;
+    if (region !== undefined) location.region = region;
+    if (district !== undefined) location.district = district;
+    if (city !== undefined) location.city = city;
+    if (street !== undefined) location.street = street;
+    
+    if (Object.keys(location).length > 0) {
+      updateData.location = location;
+    }
 
     const user = await User.findByIdAndUpdate(
       req.userId,
       updateData,
       { new: true }
-    );
+    ).select('-password');
 
     res.json({
       success: true,
@@ -181,6 +211,72 @@ router.put('/profile', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Update Profile Error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Hitilafu imetokea' 
+    });
+  }
+});
+
+// Upload profile picture
+router.post('/upload-profile-picture', auth, upload.single('profilePicture'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Tafadhali chagua picha' 
+      });
+    }
+
+    const profilePictureUrl = `/${req.file.path.replace(/\\/g, '/')}`;
+
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { profilePicture: profilePictureUrl },
+      { new: true }
+    ).select('-password');
+
+    res.json({
+      success: true,
+      message: 'Picha ya profile imebadilishwa!',
+      profilePicture: profilePictureUrl,
+      user
+    });
+  } catch (error) {
+    console.error('Upload Profile Picture Error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Hitilafu imetokea' 
+    });
+  }
+});
+
+// Upload cover photo
+router.post('/upload-cover-photo', auth, upload.single('coverPhoto'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Tafadhali chagua picha' 
+      });
+    }
+
+    const coverPhotoUrl = `/${req.file.path.replace(/\\/g, '/')}`;
+
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { coverPhoto: coverPhotoUrl },
+      { new: true }
+    ).select('-password');
+
+    res.json({
+      success: true,
+      message: 'Picha ya cover imebadilishwa!',
+      coverPhoto: coverPhotoUrl,
+      user
+    });
+  } catch (error) {
+    console.error('Upload Cover Photo Error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Hitilafu imetokea' 

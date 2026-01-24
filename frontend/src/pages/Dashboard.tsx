@@ -274,6 +274,16 @@ export default function Dashboard() {
 
         {/* Main Content */}
         <main className="flex-1 lg:ml-64 lg:mr-80 max-w-2xl mx-auto px-4 py-6">
+          {/* Welcome Header */}
+          {user && (
+            <div className="mb-6">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                Welcome back, {user.name}! 👋
+              </h1>
+              <p className="text-gray-600 mt-1">What's happening today?</p>
+            </div>
+          )}
+
           {/* Post Composer */}
           <div className="bg-white rounded-lg shadow p-4 mb-4">
             <div className="flex items-start space-x-3">

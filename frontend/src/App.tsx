@@ -4,6 +4,7 @@ import HomeRedirect from './components/HomeRedirect'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Profile from './pages/Profile'
+import EditProfile from './pages/EditProfile'
 import Content from './pages/Content'
 import ContentDetail from './pages/ContentDetail'
 import Wallet from './pages/Wallet'
@@ -36,6 +37,7 @@ function App() {
         <Route path="/profile/:id" element={<Profile />} />
         
         <Route element={<ProtectedRoute />}>
+          <Route path="/edit-profile" element={<EditProfile />} />
           <Route path="/wallet" element={<Wallet />} />
           <Route path="/upload" element={<Upload />} />
         </Route>
