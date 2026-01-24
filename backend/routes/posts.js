@@ -5,6 +5,7 @@ const Post = require('../models/Post');
 const Comment = require('../models/Comment');
 const Notification = require('../models/Notification');
 const { auth } = require('../middleware/auth');
+const upload = require('../config/multer');
 
 // Get newsfeed posts
 router.get('/feed', auth, async (req, res) => {
@@ -80,19 +81,24 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create post
-router.post('/', auth, [
-  body('content.text').optional().isLength({ max: 10000 })
-], async (req, res) => {
+router.post('/', auth, upload.array('media', 10), async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, errors: errors.array() });
+    const { text, visibility, hashtags, mentions } = req.body;
+
+    // Build content object
+    const content = {
+      text: text || ''
+    };
+
+    // Add uploaded images to content
+    if (req.files && req.files.length > 0) {
+      content.images = req.files.map(file => ({
+        url: `/${file.path.replace(/\\/g, '/')}`
+      }));
     }
 
-    const { content, visibility, hashtags, mentions } = req.body;
-
     // Extract hashtags from text if not provided
-    let postHashtags = hashtags || [];
+    let postHashtags = hashtags ? (Array.isArray(hashtags) ? hashtags : [hashtags]) : [];
     if (content.text) {
       const extractedHashtags = content.text.match(/#[\w]+/g);
       if (extractedHashtags) {
@@ -103,16 +109,17 @@ router.post('/', auth, [
     const post = await Post.create({
       author: req.user._id,
       content,
-      visibility: visibility || req.user.privacySettings.postVisibility,
+      visibility: visibility || 'public',
       hashtags: [...new Set(postHashtags)],
-      mentions
+      mentions: mentions ? (Array.isArray(mentions) ? mentions : [mentions]) : []
     });
 
     await post.populate('author', 'name profilePicture verified');
 
     // Create notifications for mentions
     if (mentions && mentions.length > 0) {
-      const notifications = mentions.map(userId => ({
+      const mentionArray = Array.isArray(mentions) ? mentions : [mentions];
+      const notifications = mentionArray.map(userId => ({
         recipient: userId,
         sender: req.user._id,
         type: 'mention',
@@ -126,6 +133,7 @@ router.post('/', auth, [
 
     res.status(201).json({ success: true, post });
   } catch (error) {
+    console.error('Create post error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

@@ -75,7 +75,9 @@ export default function Dashboard() {
 
   const fetchPosts = async () => {
     try {
-      const token = localStorage.getItem('token')
+      const { token } = useAuthStore.getState()
+      if (!token) return
+      
       const response = await axios.get('/api/posts/feed', {
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -105,11 +107,18 @@ export default function Dashboard() {
     
     setLoading(true)
     try {
-      const token = localStorage.getItem('token')
+      const { token } = useAuthStore.getState()
+      if (!token) {
+        alert('Please login again')
+        return
+      }
+
+      // Use FormData to send text and images
       const formData = new FormData()
       formData.append('text', postText)
       formData.append('visibility', 'public')
       
+      // Add all selected images
       selectedFiles.forEach((file) => {
         formData.append('media', file)
       })
@@ -120,12 +129,14 @@ export default function Dashboard() {
           'Content-Type': 'multipart/form-data'
         }
       })
+      
       setPostText('')
       setSelectedFiles([])
       setPreviewUrls([])
       fetchPosts()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating post:', error)
+      alert(error.response?.data?.message || 'Error creating post')
     } finally {
       setLoading(false)
     }
